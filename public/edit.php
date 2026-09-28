@@ -1,5 +1,11 @@
 <?php
 // public/edit.php
+session_start();
+
+if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
+
 require_once __DIR__ . '/../config/db.php';
 
 $errors = [];
@@ -30,6 +36,14 @@ $stock    = $product['stock'];
 $oldImage = $product['image'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $userToken    = $_POST['csrf'] ?? '';
+    $sessionToken = $_SESSION['csrf'] ?? '';
+
+    if (!hash_equals($sessionToken, $userToken)) {
+        http_response_code(403);
+        exit("Akses ditolak: Token CSRF tidak valid!");
+    }
+
     $name     = trim($_POST['name'] ?? '');
     $category = trim($_POST['category'] ?? '');
     $price    = filter_input(INPUT_POST, 'price', FILTER_VALIDATE_FLOAT);
@@ -45,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stock === false || $stock < 0) {
         $errors['stock'] = "Stok tidak boleh negatif.";
     }
+
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $fileTmpPath   = $_FILES['image']['tmp_name'];
         $fileName      = $_FILES['image']['name'];
@@ -52,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
         if (in_array($fileExtension, $allowedExtensions)) {
-            $newFileName = time() . '_' . uniqid() . '.' . $fileExtension;
+            $newFileName   = time() . '_' . uniqid() . '.' . $fileExtension;
             $uploadFileDir = __DIR__ . '/uploads/';
 
             if (move_uploaded_file($fileTmpPath, $uploadFileDir . $newFileName)) {
@@ -104,44 +119,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="index.php" class="btn btn-secondary" style="margin-bottom: 20px;">← Batal & Kembali</a>
 
         <?php if (!empty($errors['general'])): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($errors['general']) ?></div>
+            <div class="alert alert-danger"><?= htmlspecialchars($errors['general'], ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
 
-        <form action="edit.php?id=<?= htmlspecialchars($id) ?>" method="POST" enctype="multipart/form-data" class="form-card">
+        <form action="edit.php?id=<?= htmlspecialchars($id, ENT_QUOTES, 'UTF-8') ?>" method="POST" enctype="multipart/form-data" class="form-card">
+            <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
+
             <div class="form-group">
                 <label for="name">Nama Baju / Produk</label>
-                <input type="text" id="name" name="name" value="<?= htmlspecialchars($name) ?>" required>
+                <input type="text" id="name" name="name" value="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>" required>
                 <?php if (isset($errors['name'])): ?>
-                    <small class="text-danger"><?= $errors['name'] ?></small>
+                    <small class="text-danger"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></small>
                 <?php endif; ?>
             </div>
 
             <div class="form-group">
                 <label for="category">Kategori / Ukuran</label>
-                <input type="text" id="category" name="category" value="<?= htmlspecialchars($category) ?>">
+                <input type="text" id="category" name="category" value="<?= htmlspecialchars($category, ENT_QUOTES, 'UTF-8') ?>">
             </div>
 
             <div class="form-group">
                 <label for="price">Harga (Rp)</label>
-                <input type="number" id="price" name="price" step="0.01" value="<?= htmlspecialchars($price) ?>" required>
+                <input type="number" id="price" name="price" step="0.01" value="<?= htmlspecialchars($price, ENT_QUOTES, 'UTF-8') ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="stock">Stok</label>
-                <input type="number" id="stock" name="stock" value="<?= htmlspecialchars($stock) ?>" required>
+                <input type="number" id="stock" name="stock" value="<?= htmlspecialchars($stock, ENT_QUOTES, 'UTF-8') ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="image">Ganti Foto Baju (Opsional)</label>
                 <?php if ($oldImage && file_exists(__DIR__ . '/uploads/' . $oldImage)): ?>
                     <div style="margin-bottom: 10px;">
-                        <img src="uploads/<?= htmlspecialchars($oldImage) ?>" alt="Foto Lama" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                        <img src="uploads/<?= htmlspecialchars($oldImage, ENT_QUOTES, 'UTF-8') ?>" alt="Foto Lama" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
                         <span style="font-size: 12px; color: #64748b; display: block;">Foto saat ini</span>
                     </div>
                 <?php endif; ?>
                 <input type="file" id="image" name="image" accept="image/*">
                 <?php if (isset($errors['image'])): ?>
-                    <small class="text-danger"><?= $errors['image'] ?></small>
+                    <small class="text-danger"><?= htmlspecialchars($errors['image'], ENT_QUOTES, 'UTF-8') ?></small>
                 <?php endif; ?>
             </div>
 

@@ -1,5 +1,10 @@
 <?php
 // public/create.php
+session_start();
+if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
+
 require_once __DIR__ . '/../config/db.php';
 
 $errors = [];
@@ -9,6 +14,14 @@ $price = '';
 $stock = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $userToken    = $_POST['csrf'] ?? '';
+    $sessionToken = $_SESSION['csrf'] ?? '';
+
+    if (!hash_equals($sessionToken, $userToken)) {
+        http_response_code(403);
+        exit("Akses ditolak: Token CSRF tidak valid!");
+    }
+
     $name     = trim($_POST['name'] ?? '');
     $category = trim($_POST['category'] ?? '');
     $price    = filter_input(INPUT_POST, 'price', FILTER_VALIDATE_FLOAT);
@@ -26,21 +39,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES['image']['tmp_name'];
-        $fileName    = $_FILES['image']['name'];
+        $fileTmpPath   = $_FILES['image']['tmp_name'];
+        $fileName      = $_FILES['image']['name'];
         $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
         if (in_array($fileExtension, $allowedExtensions)) {
-            $newFileName = time() . '_' . uniqid() . '.' . $fileExtension;
+            $newFileName   = time() . '_' . uniqid() . '.' . $fileExtension;
             $uploadFileDir = __DIR__ . '/uploads/';
             
-            if(!is_dir($uploadFileDir)){
+            if (!is_dir($uploadFileDir)) {
                 mkdir($uploadFileDir, 0755, true);
             }
             
             $dest_path = $uploadFileDir . $newFileName;
-            if(move_uploaded_file($fileTmpPath, $dest_path)) {
+            if (move_uploaded_file($fileTmpPath, $dest_path)) {
                 $imageName = $newFileName;
             } else {
                 $errors['image'] = "Gagal mengunggah gambar.";
@@ -85,38 +98,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="index.php" class="btn btn-secondary">← Kembali ke Katalog</a>
 
         <?php if (!empty($errors['general'])): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($errors['general']) ?></div>
+            <div class="alert alert-danger"><?= htmlspecialchars($errors['general'], ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
 
         <form action="create.php" method="POST" enctype="multipart/form-data" class="form-card">
+            <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
+
             <div class="form-group">
                 <label for="name">Nama Baju / Produk</label>
-                <input type="text" id="name" name="name" value="<?= htmlspecialchars($name) ?>" placeholder="Contoh: Kaos Oversize Black" required>
+                <input type="text" id="name" name="name" value="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>" placeholder="Contoh: Kaos Oversize Black" required>
                 <?php if (isset($errors['name'])): ?>
-                    <small class="text-danger"><?= $errors['name'] ?></small>
+                    <small class="text-danger"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></small>
                 <?php endif; ?>
             </div>
 
             <div class="form-group">
                 <label for="category">Kategori / Ukuran</label>
-                <input type="text" id="category" name="category" value="<?= htmlspecialchars($category) ?>" placeholder="Contoh: Kaos, Kemeja, Outer">
+                <input type="text" id="category" name="category" value="<?= htmlspecialchars($category, ENT_QUOTES, 'UTF-8') ?>" placeholder="Contoh: Kaos, Kemeja, Outer">
             </div>
 
             <div class="form-group">
                 <label for="price">Harga (Rp)</label>
-                <input type="number" id="price" name="price" step="0.01" value="<?= htmlspecialchars($price) ?>" required>
+                <input type="number" id="price" name="price" step="0.01" value="<?= htmlspecialchars($price, ENT_QUOTES, 'UTF-8') ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="stock">Stok</label>
-                <input type="number" id="stock" name="stock" value="<?= htmlspecialchars($stock) ?>" required>
+                <input type="number" id="stock" name="stock" value="<?= htmlspecialchars($stock, ENT_QUOTES, 'UTF-8') ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="image">Foto Baju</label>
                 <input type="file" id="image" name="image" accept="image/*">
                 <?php if (isset($errors['image'])): ?>
-                    <small class="text-danger"><?= $errors['image'] ?></small>
+                    <small class="text-danger"><?= htmlspecialchars($errors['image'], ENT_QUOTES, 'UTF-8') ?></small>
                 <?php endif; ?>
             </div>
 

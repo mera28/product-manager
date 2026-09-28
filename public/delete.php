@@ -1,8 +1,22 @@
 <?php
 // public/delete.php
+session_start();
 require_once __DIR__ . '/../config/db.php';
 
-$id = $_GET['id'] ?? null;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit("Method Not Allowed");
+}
+
+$userToken    = $_POST['csrf'] ?? '';
+$sessionToken = $_SESSION['csrf'] ?? '';
+
+if (!hash_equals($sessionToken, $userToken)) {
+    http_response_code(403);
+    exit("Akses ditolak: Token CSRF tidak valid!");
+}
+
+$id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
 if ($id) {
     try {
