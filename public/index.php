@@ -26,9 +26,11 @@ $status = $_GET['status'] ?? '';
             <a href="create.php" class="btn btn-primary">+ Tambah Baju Baru</a>
         </div>
 
-        <?php if ($status === 'created'): ?>
-            <div class="alert alert-success">Baju berhasil ditambahkan ke katalog!</div>
-        <?php endif; ?>
+      <?php if ($status === 'created'): ?>
+    <div class="alert alert-success">Baju berhasil ditambahkan ke katalog!</div>
+<?php elseif ($status === 'updated'): ?>
+    <div class="alert alert-success">Data baju berhasil diperbarui!</div>
+<?php endif; ?>
 
         <?php if (empty($products)): ?>
             <div class="empty-state">
