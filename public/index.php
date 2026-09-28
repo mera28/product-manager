@@ -30,6 +30,8 @@ $status = $_GET['status'] ?? '';
     <div class="alert alert-success">Baju berhasil ditambahkan ke katalog!</div>
 <?php elseif ($status === 'updated'): ?>
     <div class="alert alert-success">Data baju berhasil diperbarui!</div>
+<?php elseif ($status === 'deleted'): ?>
+    <div class="alert alert-danger">Baju berhasil dihapus dari katalog!</div>
 <?php endif; ?>
 
         <?php if (empty($products)): ?>
