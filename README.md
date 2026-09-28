@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS products (
 
 ### 2. Konfigurasi Koneksi Database
 
-Buka file `config/db.php` dan sesuaikan kredensial database lokal milikmu:
+Buka file `config/db.php` 
 
 ```php
 $host = 'localhost';
@@ -79,7 +79,7 @@ $pass = '';
 
 ### 3. Jalankan Aplikasi
 
-1. Pindahkan folder proyek ke dalam direktori server lokal kamu:
+1. Pindahkan folder proyek ke dalam direktori server lokal 
    - **XAMPP**: `C:/xampp/htdocs/product-manager`
    - **Laragon**: `C:/laragon/www/product-manager`
 2. Buka browser dan akses alamat berikut:
